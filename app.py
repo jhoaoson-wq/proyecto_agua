@@ -191,8 +191,11 @@ if menu == "Ingresar Nuevo Mes":
 
             # GENERAR PDF
             datos_pdf = {
-                "Mes": mes_final, 
-                "Total_Recibo": importe_total, 
+                "Mes": mes_final,
+                "Total_Recibo": importe_total,
+                "Fecha_Lectura": f_lect.strftime('%d/%m/%Y'),
+                "Fecha_Vencimiento": f_venc.strftime('%d/%m/%Y'),
+                "Fecha_Pago": f_pago.strftime('%d/%m/%Y'), 
                 "Factor": factor,
                 "Detalle": [
                     {"nombre": "Gabi", "m3": c_gabi, "pago": c_gabi*factor},
