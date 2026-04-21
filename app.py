@@ -220,57 +220,46 @@ if menu == "Ingresar Nuevo Mes":
 
 elif menu == "Ver Históricos":
     st.header("📅 Consulta de Historial")
-    
-    # Leemos la base de datos completa
     data = conn.read(worksheet="Historico", ttl=0)
     
     if not data.empty:
-        # 1. Creamos una lista de los meses disponibles (del más reciente al más antiguo)
         lista_periodos = data["Mes"].unique().tolist()
         lista_periodos.reverse() 
+        periodo_sel = st.selectbox("Seleccione el periodo:", lista_periodos)
         
-        periodo_sel = st.selectbox("Seleccione el periodo que desea consultar:", lista_periodos)
-        
-        # 2. Filtramos los datos del periodo elegido
+        # Extraemos la fila del mes seleccionado
         df_mes = data[data["Mes"] == periodo_sel].iloc[0]
         
-        st.markdown(f"### Resumen de {periodo_sel}")
-        
-        # 3. Mostramos métricas rápidas en columnas
-        m1, m2, m3 = st.columns(3)
-        m1.metric("Total Recibo", f"S/ {df_mes['Total_Recibo']:.2f}")
-        m2.metric("Consumo Gen.", f"{df_mes['Total_Act'] - df_mes['Total_Ant']:.3f} m3")
-        m3.metric("Factor", f"{df_mes['Factor']:.4f}")
-        
-        # 4. Tabla de distribución de ese mes
-        f_gabi = df_mes['Gabi_Act'] - df_mes['Gabi_Ant']
-        f_papiro = df_mes['Papiro_Act'] - df_mes['Papiro_Ant']
-        # Calculamos alibi restando al total los otros dos medidores
-        f_total = df_mes['Total_Act'] - df_mes['Total_Ant']
-        f_alibi = f_total - (f_gabi + f_papiro)
-        
-        resumen_mes = {
-            "Familia": ["Gabi", "Papiro", "Alibi"],
-            "Consumo (m3)": [f_gabi, f_papiro, f_alibi],
-            "Pago (S/)": [f_gabi * df_mes['Factor'], f_papiro * df_mes['Factor'], f_alibi * df_mes['Factor']]
-        }
-        
-        st.table(pd.DataFrame(resumen_mes))
-        
-        # 5. Opción para descargar nuevamente el PDF
-        st.subheader("📥 Re-descargar Reporte")
-        
+        # --- PREPARACIÓN DE DATOS PARA EL PDF DETALLADO ---
+        # Calculamos los consumos para que el PDF los muestre correctamente
+        g_cons = df_mes['Gabi_Act'] - df_mes['Gabi_Ant'] [cite: 6]
+        p_cons = df_mes['Papiro_Act'] - df_mes['Papiro_Ant'] [cite: 6]
+        t_cons = df_mes['Total_Act'] - df_mes['Total_Ant'] [cite: 6]
+        a_cons = t_cons - (g_cons + p_cons) [cite: 6]
+
         datos_pdf_hist = {
-            "Mes": periodo_sel, 
-            "Total_Recibo": df_mes['Total_Recibo'], 
-            "Factor": df_mes['Factor'],
-            "Detalle": [
-                {"nombre": "Gabi", "m3": f_gabi, "pago": f_gabi * df_mes['Factor']},
-                {"nombre": "Papiro", "m3": f_papiro, "pago": f_papiro * df_mes['Factor']},
-                {"nombre": "Alibi", "m3": f_alibi, "pago": f_alibi * df_mes['Factor']}
-            ]
+            "Mes": periodo_sel,
+            "Total_Recibo": df_mes['Total_Recibo'], [cite: 3]
+            "Fecha_Lectura": df_mes['Lectura'], [cite: 3]
+            "Fecha_Vencimiento": df_mes['Vencimiento'], [cite: 4]
+            "Fecha_Pago": df_mes['Pago'], [cite: 4]
+            "Factor": df_mes['Factor'], [cite: 8]
+            # Datos de medidores
+            "G_Act": df_mes['Gabi_Act'], "G_Ant": df_mes['Gabi_Ant'], "G_Cons": g_cons, [cite: 6]
+            "P_Act": df_mes['Papiro_Act'], "P_Ant": df_mes['Papiro_Ant'], "P_Cons": p_cons, [cite: 6]
+            "T_Act": df_mes['Total_Act'], "T_Ant": df_mes['Total_Ant'], "T_Cons": t_cons, [cite: 6]
+            "A_Cons": a_cons, [cite: 6]
+            "G_Pago": g_cons * df_mes['Factor'], [cite: 8]
+            "P_Pago": p_cons * df_mes['Factor'], [cite: 8]
+            "A_Pago": a_cons * df_mes['Factor'] [cite: 8]
         }
-        
+
+        # Mostrar resumen en pantalla
+        st.markdown(f"### Resumen de {periodo_sel}")
+        col1, col2 = st.columns(2)
+        col1.metric("Total Recibo", f"S/ {df_mes['Total_Recibo']:.2f}") [cite: 3, 8]
+        col2.metric("Factor", f"{df_mes['Factor']:.6f}") [cite: 8, 9]
+
         try:
             pdf_re_output = crear_pdf(datos_pdf_hist)
             st.download_button(
@@ -278,10 +267,10 @@ elif menu == "Ver Históricos":
                 data=pdf_re_output,
                 file_name=f"Recibo_Agua_{periodo_sel.replace(' ', '_')}.pdf",
                 mime="application/pdf",
-                key=f"dl_{periodo_sel}" # Key única para evitar errores de duplicado
+                key=f"dl_{periodo_sel}"
             )
         except Exception as e:
-            st.error(f"No se pudo generar el PDF histórico: {e}")
+            st.error(f"Error al generar el PDF: {e}")
 
         # Botón para ver la tabla completa por si acaso (oculto en un expander)
         with st.expander("Ver todos los datos técnicos (Tabla Completa)"):
