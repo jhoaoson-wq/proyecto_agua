@@ -41,7 +41,7 @@ def crear_pdf(datos):
         pdf.cell(40, 10, f"{fila['m3']:.3f}", 1)
         pdf.cell(40, 10, f"S/ {fila['pago']:.2f}", 1, ln=True)
 
-    return pdf.output()
+    return bytes(pdf.output())
 
 
 def get_last_month_data():
@@ -127,21 +127,28 @@ if menu == "Ingresar Nuevo Mes":
 
             # GENERAR PDF
             datos_pdf = {
-                "Mes": mes, "Total_Recibo": importe_total, "Factor": factor,
+                "Mes": mes, 
+                "Total_Recibo": importe_total, 
+                "Factor": factor,
                 "Detalle": [
-                    {"nombre": "Gabi", "m3": c_gabi, "pago": c_gabi * factor},
-                    {"nombre": "Papiro", "m3": c_papiro, "pago": c_papiro * factor},
-                    {"nombre": "Alibi", "m3": c_alibi, "pago": c_alibi * factor}
+                    {"nombre": "Gabi", "m3": c_gabi, "pago": c_gabi*factor},
+                    {"nombre": "Papiro", "m3": c_papiro, "pago": c_papiro*factor},
+                    {"nombre": "Alibi", "m3": c_alibi, "pago": c_alibi*factor}
                 ]
             }
-            pdf_bytes = crear_pdf(datos_pdf)
-
-            st.download_button(
-                label="📥 Descargar Reporte PDF",
-                data=pdf_bytes,
-                file_name=f"Recibo_Agua_{mes}.pdf",
-                mime="application/pdf"
-            )
+            
+            try:
+                pdf_output = crear_pdf(datos_pdf)
+                
+                st.download_button(
+                    label="📥 Descargar Reporte PDF",
+                    data=pdf_output,
+                    file_name=f"Recibo_Agua_{mes.replace(' ', '_')}.pdf",
+                    mime="application/pdf",
+                    key="download-pdf" # Añadimos una clave única
+                )
+            except Exception as e:
+                st.error(f"Error al generar el archivo: {e}")
 
             # Botón WhatsApp
             texto_wa = f"Hola! El recibo de agua de {mes} ya está listo. Total: S/. {importe_total:.2f}. "
