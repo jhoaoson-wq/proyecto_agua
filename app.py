@@ -227,40 +227,60 @@ elif menu == "Ver Históricos":
         lista_periodos.reverse() 
         periodo_sel = st.selectbox("Seleccione el periodo:", lista_periodos)
         
-        # Extraemos la fila del mes seleccionado
         df_mes = data[data["Mes"] == periodo_sel].iloc[0]
         
-        # --- PREPARACIÓN DE DATOS PARA EL PDF DETALLADO ---
+        # --- CÁLCULOS PARA MOSTRAR EN PANTALLA ---
         g_cons = df_mes['Gabi_Act'] - df_mes['Gabi_Ant']
         p_cons = df_mes['Papiro_Act'] - df_mes['Papiro_Ant']
         t_cons = df_mes['Total_Act'] - df_mes['Total_Ant']
         a_cons = t_cons - (g_cons + p_cons)
 
+        st.markdown(f"### 📄 Resumen de {periodo_sel}")
+        
+        # Métricas principales resaltadas
+        c1, c2, c3 = st.columns(3)
+        c1.metric("Total Recibo", f"S/ {df_mes['Total_Recibo']:.2f}")
+        c2.metric("Factor", f"{df_mes['Factor']:.6f}")
+        c3.metric("Consumo Total", f"{t_cons:.3f} m³")
+
+        # --- NUEVA TABLA DE CONSUMOS (Como en el reporte detallado) ---
+        st.subheader("🔍 Detalle de Consumos")
+        consumo_table = pd.DataFrame({
+            "Descripción": ["GABI", "PAPIRO", "ALIBI (Dif.)", "TOTAL GENERAL"],
+            "L. Actual": [df_mes['Gabi_Act'], df_mes['Papiro_Act'], "-", df_mes['Total_Act']],
+            "L. Anterior": [df_mes['Gabi_Ant'], df_mes['Papiro_Ant'], "-", df_mes['Total_Ant']],
+            "Consumo (m³)": [g_cons, p_cons, a_cons, t_cons]
+        })
+        st.table(consumo_table)
+
+        # --- NUEVA TABLA DE PAGOS ---
+        st.subheader("💰 Distribución de Pagos")
+        pagos_table = pd.DataFrame({
+            "Familia": ["GABI", "PAPIRO", "ALIBI"],
+            "m³": [g_cons, p_cons, a_cons],
+            "Subtotal": [f"S/ {g_cons * df_mes['Factor']:.2f}", 
+                         f"S/ {p_cons * df_mes['Factor']:.2f}", 
+                         f"S/ {a_cons * df_mes['Factor']:.2f}"]
+        })
+        st.table(pagos_table)
+
+        # --- BOTÓN DE DESCARGA PDF ---
+        # (Aquí usamos el mismo 'datos_pdf_hist' que definimos antes)
         datos_pdf_hist = {
-            "Mes": periodo_sel,
-            "Total_Recibo": df_mes['Total_Recibo'],
-            "Fecha_Lectura": df_mes['Lectura'],
-            "Fecha_Vencimiento": df_mes['Vencimiento'],
-            "Fecha_Pago": df_mes['Pago'],
-            "Factor": df_mes['Factor'],
+            "Mes": periodo_sel, "Total_Recibo": df_mes['Total_Recibo'],
+            "Fecha_Lectura": df_mes['Lectura'], "Fecha_Vencimiento": df_mes['Vencimiento'],
+            "Fecha_Pago": df_mes['Pago'], "Factor": df_mes['Factor'],
             "G_Act": df_mes['Gabi_Act'], "G_Ant": df_mes['Gabi_Ant'], "G_Cons": g_cons,
             "P_Act": df_mes['Papiro_Act'], "P_Ant": df_mes['Papiro_Ant'], "P_Cons": p_cons,
             "T_Act": df_mes['Total_Act'], "T_Ant": df_mes['Total_Ant'], "T_Cons": t_cons,
-            "A_Cons": a_cons,
-            "G_Pago": g_cons * df_mes['Factor'],
-            "P_Pago": p_cons * df_mes['Factor'],
-            "A_Pago": a_cons * df_mes['Factor']
+            "A_Cons": a_cons, "G_Pago": g_cons * df_mes['Factor'],
+            "P_Pago": p_cons * df_mes['Factor'], "A_Pago": a_cons * df_mes['Factor']
         }
-
-        st.markdown(f"### Resumen de {periodo_sel}")
-        col1, col2 = st.columns(2)
-        col1.metric("Total Recibo", f"S/ {df_mes['Total_Recibo']:.2f}")
-        col2.metric("Factor", f"{df_mes['Factor']:.6f}")
 
         try:
             pdf_re_output = crear_pdf(datos_pdf_hist)
             st.download_button(
-                label=f"📥 Descargar PDF de {periodo_sel}",
+                label=f"📥 Descargar PDF Completo de {periodo_sel}",
                 data=pdf_re_output,
                 file_name=f"Recibo_Agua_{periodo_sel.replace(' ', '_')}.pdf",
                 mime="application/pdf",
@@ -268,6 +288,11 @@ elif menu == "Ver Históricos":
             )
         except Exception as e:
             st.error(f"Error al generar el PDF: {e}")
+
+        with st.expander("Ver fechas del periodo"):
+            st.write(f"**Lectura:** {df_mes['Lectura']}")
+            st.write(f"**Vencimiento:** {df_mes['Vencimiento']}")
+            st.write(f"**Pago Programado:** {df_mes['Pago']}")
 
         # Botón para ver la tabla completa por si acaso (oculto en un expander)
         with st.expander("Ver todos los datos técnicos (Tabla Completa)"):
