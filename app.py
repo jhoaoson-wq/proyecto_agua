@@ -41,7 +41,7 @@ def crear_pdf(datos):
         pdf.cell(40, 10, f"{fila['m3']:.3f}", 1)
         pdf.cell(40, 10, f"S/ {fila['pago']:.2f}", 1, ln=True)
 
-    return pdf.output(dest='S').encode('latin-1')
+    return pdf.output()
 
 
 def get_last_month_data():
