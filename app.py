@@ -231,34 +231,31 @@ elif menu == "Ver Históricos":
         df_mes = data[data["Mes"] == periodo_sel].iloc[0]
         
         # --- PREPARACIÓN DE DATOS PARA EL PDF DETALLADO ---
-        # Calculamos los consumos para que el PDF los muestre correctamente
-        g_cons = df_mes['Gabi_Act'] - df_mes['Gabi_Ant'] [cite: 6]
-        p_cons = df_mes['Papiro_Act'] - df_mes['Papiro_Ant'] [cite: 6]
-        t_cons = df_mes['Total_Act'] - df_mes['Total_Ant'] [cite: 6]
-        a_cons = t_cons - (g_cons + p_cons) [cite: 6]
+        g_cons = df_mes['Gabi_Act'] - df_mes['Gabi_Ant']
+        p_cons = df_mes['Papiro_Act'] - df_mes['Papiro_Ant']
+        t_cons = df_mes['Total_Act'] - df_mes['Total_Ant']
+        a_cons = t_cons - (g_cons + p_cons)
 
         datos_pdf_hist = {
             "Mes": periodo_sel,
-            "Total_Recibo": df_mes['Total_Recibo'], [cite: 3]
-            "Fecha_Lectura": df_mes['Lectura'], [cite: 3]
-            "Fecha_Vencimiento": df_mes['Vencimiento'], [cite: 4]
-            "Fecha_Pago": df_mes['Pago'], [cite: 4]
-            "Factor": df_mes['Factor'], [cite: 8]
-            # Datos de medidores
-            "G_Act": df_mes['Gabi_Act'], "G_Ant": df_mes['Gabi_Ant'], "G_Cons": g_cons, [cite: 6]
-            "P_Act": df_mes['Papiro_Act'], "P_Ant": df_mes['Papiro_Ant'], "P_Cons": p_cons, [cite: 6]
-            "T_Act": df_mes['Total_Act'], "T_Ant": df_mes['Total_Ant'], "T_Cons": t_cons, [cite: 6]
-            "A_Cons": a_cons, [cite: 6]
-            "G_Pago": g_cons * df_mes['Factor'], [cite: 8]
-            "P_Pago": p_cons * df_mes['Factor'], [cite: 8]
-            "A_Pago": a_cons * df_mes['Factor'] [cite: 8]
+            "Total_Recibo": df_mes['Total_Recibo'],
+            "Fecha_Lectura": df_mes['Lectura'],
+            "Fecha_Vencimiento": df_mes['Vencimiento'],
+            "Fecha_Pago": df_mes['Pago'],
+            "Factor": df_mes['Factor'],
+            "G_Act": df_mes['Gabi_Act'], "G_Ant": df_mes['Gabi_Ant'], "G_Cons": g_cons,
+            "P_Act": df_mes['Papiro_Act'], "P_Ant": df_mes['Papiro_Ant'], "P_Cons": p_cons,
+            "T_Act": df_mes['Total_Act'], "T_Ant": df_mes['Total_Ant'], "T_Cons": t_cons,
+            "A_Cons": a_cons,
+            "G_Pago": g_cons * df_mes['Factor'],
+            "P_Pago": p_cons * df_mes['Factor'],
+            "A_Pago": a_cons * df_mes['Factor']
         }
 
-        # Mostrar resumen en pantalla
         st.markdown(f"### Resumen de {periodo_sel}")
         col1, col2 = st.columns(2)
-        col1.metric("Total Recibo", f"S/ {df_mes['Total_Recibo']:.2f}") [cite: 3, 8]
-        col2.metric("Factor", f"{df_mes['Factor']:.6f}") [cite: 8, 9]
+        col1.metric("Total Recibo", f"S/ {df_mes['Total_Recibo']:.2f}")
+        col2.metric("Factor", f"{df_mes['Factor']:.6f}")
 
         try:
             pdf_re_output = crear_pdf(datos_pdf_hist)
