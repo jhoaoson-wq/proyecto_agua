@@ -85,9 +85,9 @@ if menu == "Ingresar Nuevo Mes":
         importe_total = st.number_input("Importe Total del Recibo (S/.)", min_value=0.0, step=0.10)
         
         col1, col2 = st.columns(2)
-        f_venc = col1.date_input("Fecha Vencimiento")
-        f_lect = col2.date_input("Fecha de Lectura")
-        f_pago = st.date_input("Fecha Programada de Pago")
+        f_venc = col1.date_input("Fecha Vencimiento", format="DD/MM/YYYY")
+        f_lect = col2.date_input("Fecha de Lectura", format="DD/MM/YYYY")
+        f_pago = st.date_input("Fecha Programada de Pago", format="DD/MM/YYYY")
 
     # Obtener datos anteriores para autocompletar
     ultimo_registro = get_last_month_data()
