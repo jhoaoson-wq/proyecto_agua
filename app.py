@@ -16,31 +16,48 @@ conn = st.connection("gsheets", type=GSheetsConnection)
 def crear_pdf(datos):
     pdf = FPDF()
     pdf.add_page()
-    pdf.set_font("Arial", 'B', 16)
-
-    # Título
-    pdf.cell(0, 10, "REPORTE DE CONSUMO DE AGUA", ln=True, align='C')
+    
+    # --- ENCABEZADO ---
+    pdf.set_fill_color(30, 144, 255) # Azul brillante
+    pdf.set_text_color(255, 255, 255) # Texto blanco
+    pdf.set_font("helvetica", 'B', 16)
+    pdf.cell(0, 15, "REPORTE DE CONSUMO DE AGUA", ln=True, align='C', fill=True)
     pdf.ln(10)
-
-    # Datos Generales
-    pdf.set_font("Arial", '', 12)
-    pdf.cell(0, 10, f"Mes: {datos['Mes']}", ln=True)
-    pdf.cell(0, 10, f"Total Recibo: S/ {datos['Total_Recibo']:.2f}", ln=True)
-    pdf.cell(0, 10, f"Factor calculado: {datos['Factor']:.6f}", ln=True)
-    pdf.ln(5)
-
-    # Tabla de resultados
-    pdf.set_font("Arial", 'B', 12)
-    pdf.cell(40, 10, "Familia", 1)
-    pdf.cell(40, 10, "Consumo m3", 1)
-    pdf.cell(40, 10, "Total S/", 1, ln=True)
-
-    pdf.set_font("Arial", '', 12)
+    
+    # --- CUADRO DE RESUMEN ---
+    pdf.set_text_color(0, 0, 0) # Volver a texto negro
+    pdf.set_fill_color(240, 240, 240) # Gris claro
+    pdf.set_font("helvetica", 'B', 12)
+    
+    # Fila 1 del resumen
+    pdf.cell(95, 10, f" Mes: {datos['Mes']}", border=1, fill=True)
+    pdf.cell(95, 10, f" Total Recibo: S/ {datos['Total_Recibo']:.2f}", border=1, ln=True, fill=True)
+    
+    # Fila 2 del resumen
+    pdf.set_font("helvetica", '', 11)
+    pdf.cell(0, 10, f" Factor de distribución: {datos['Factor']:.6f}", border=1, ln=True)
+    pdf.ln(10)
+    
+    # --- TABLA DE DETALLE ---
+    pdf.set_font("helvetica", 'B', 12)
+    pdf.set_fill_color(200, 220, 255) # Azul muy claro para cabecera
+    
+    # Cabeceras de tabla
+    pdf.cell(60, 10, " Familia", 1, 0, 'L', fill=True)
+    pdf.cell(65, 10, " Consumo (m3)", 1, 0, 'C', fill=True)
+    pdf.cell(65, 10, " Importe a Pagar", 1, 1, 'C', fill=True)
+    
+    # Filas de la tabla
+    pdf.set_font("helvetica", size=11)
     for fila in datos['Detalle']:
-        pdf.cell(40, 10, fila['nombre'], 1)
-        pdf.cell(40, 10, f"{fila['m3']:.3f}", 1)
-        pdf.cell(40, 10, f"S/ {fila['pago']:.2f}", 1, ln=True)
-
+        pdf.cell(60, 10, f" {fila['nombre']}", 1)
+        pdf.cell(65, 10, f"{fila['m3']:.3f}", 1, 0, 'C')
+        pdf.cell(65, 10, f"S/ {fila['pago']:.2f}", 1, 1, 'C')
+        
+    pdf.ln(15)
+    pdf.set_font("helvetica", 'I', 10)
+    pdf.cell(0, 10, "Este es un documento informativo para la distribución familiar.", ln=True, align='C')
+    
     return bytes(pdf.output())
 
 
