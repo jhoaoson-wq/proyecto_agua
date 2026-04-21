@@ -121,8 +121,9 @@ if menu == "Ingresar Nuevo Mes":
             }])
 
             # Guardar en Google Sheets
-            conn.create(worksheet="Historico", data=new_data)
-            st.success("¡Datos guardados en el Excel!")
+            existing_data = conn.read(worksheet="Historico")
+            updated_df = pd.concat([existing_data, new_data], ignore_index=True)
+            conn.update(worksheet="Historico", data=updated_df)
 
             # GENERAR PDF
             datos_pdf = {
