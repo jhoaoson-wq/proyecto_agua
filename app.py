@@ -16,42 +16,76 @@ def crear_pdf(datos):
     pdf = FPDF()
     pdf.add_page()
     
-    # --- ENCABEZADO ---
-    pdf.set_fill_color(30, 144, 255) # Azul brillante
-    pdf.set_text_color(255, 255, 255) # Texto blanco
+    # --- ENCABEZADO PRINCIPAL ---
     pdf.set_font("helvetica", 'B', 16)
-    pdf.cell(0, 15, "REPORTE DE CONSUMO DE AGUA", ln=True, align='C', fill=True)
+    pdf.cell(0, 10, "CÁLCULO DE RECIBO DE AGUA", ln=True, align='C')
+    pdf.set_font("helvetica", '', 12)
+    pdf.cell(0, 10, "Reporte Mensual de Distribución", ln=True, align='C')
+    pdf.ln(5)
+    
+    # --- RESUMEN DE PAGOS Y FECHAS ---
+    pdf.set_fill_color(240, 240, 240)
+    pdf.set_font("helvetica", 'B', 11)
+    
+    # Bloque de Total y Fechas (Simulando la estructura del PDF original)
+    pdf.cell(95, 10, f" TOTAL A PAGAR RECIBO: S/ {datos['Total_Recibo']:.2f}", border=1, fill=True)
+    pdf.cell(95, 10, f" FECHA DE LECTURA: {datos['Fecha_Lectura']}", border=1, ln=True, fill=True)
+    pdf.cell(95, 10, f" FECHA VENCIMIENTO: {datos['Fecha_Vencimiento']}", border=1)
+    pdf.cell(95, 10, f" FECHA PROG. PAGO: {datos['Fecha_Pago']}", border=1, ln=True)
     pdf.ln(10)
     
-    # --- CUADRO DE RESUMEN ---
-    pdf.set_text_color(0, 0, 0)
-    pdf.set_fill_color(240, 240, 240) # Gris claro
+    # --- SECCIÓN 1: DETALLE DE CONSUMOS (m3) ---
     pdf.set_font("helvetica", 'B', 12)
+    pdf.cell(0, 10, "DETALLE DE CONSUMOS (m3)", ln=True)
     
-    pdf.cell(95, 10, f" Mes: {datos['Mes']}", border=1, fill=True)
-    pdf.cell(95, 10, f" Total Recibo: S/ {datos['Total_Recibo']:.2f}", border=1, ln=True, fill=True)
-    
-    pdf.set_font("helvetica", '', 11)
-    pdf.cell(0, 10, f" Factor de distribución: {datos['Factor']:.6f}", border=1, ln=True)
-    pdf.ln(10)
-    
-    # --- TABLA DE DETALLE ---
-    pdf.set_font("helvetica", 'B', 12)
     pdf.set_fill_color(200, 220, 255)
+    pdf.set_font("helvetica", 'B', 10)
+    pdf.cell(50, 10, " DESCRIPCIÓN", 1, 0, 'L', fill=True)
+    pdf.cell(45, 10, " L. ACTUAL", 1, 0, 'C', fill=True)
+    pdf.cell(45, 10, " L. ANTERIOR", 1, 0, 'C', fill=True)
+    pdf.cell(50, 10, " CONSUMO MES", 1, 1, 'C', fill=True)
     
-    pdf.cell(60, 10, " Familia", 1, 0, 'L', fill=True)
-    pdf.cell(65, 10, " Consumo (m3)", 1, 0, 'C', fill=True)
-    pdf.cell(65, 10, " Importe a Pagar", 1, 1, 'C', fill=True)
+    pdf.set_font("helvetica", '', 10)
+    # Filas de consumos
+    familias = [
+        ("GABI", datos['G_Act'], datos['G_Ant'], datos['G_Cons']),
+        ("PAPIRO", datos['P_Act'], datos['P_Ant'], datos['P_Cons']),
+        ("ALIBI (Diferencial)", "-", "-", datos['A_Cons']),
+    ]
     
-    pdf.set_font("helvetica", size=11)
-    for fila in datos['Detalle']:
-        pdf.cell(60, 10, f" {fila['nombre']}", 1)
-        pdf.cell(65, 10, f"{fila['m3']:.3f}", 1, 0, 'C')
-        pdf.cell(65, 10, f"S/ {fila['pago']:.2f}", 1, 1, 'C')
+    for nom, act, ant, cons in familias:
+        pdf.cell(50, 10, f" {nom}", 1)
+        pdf.cell(45, 10, f"{act}" if isinstance(act, str) else f"{act:.3f}", 1, 0, 'C')
+        pdf.cell(45, 10, f"{ant}" if isinstance(ant, str) else f"{ant:.3f}", 1, 0, 'C')
+        pdf.cell(50, 10, f"{cons:.3f}", 1, 1, 'C')
         
-    pdf.ln(15)
-    pdf.set_font("helvetica", 'I', 10)
-    pdf.cell(0, 10, "Este es un documento informativo para la distribución familiar.", ln=True, align='C')
+    pdf.set_font("helvetica", 'B', 10)
+    pdf.cell(140, 10, " CONSUMO TOTAL GENERAL", 1, 0, 'L', fill=True)
+    pdf.cell(50, 10, f"{datos['T_Cons']:.3f}", 1, 1, 'C', fill=True)
+    pdf.ln(10)
+    
+    # --- SECCIÓN 2: DISTRIBUCIÓN DE PAGOS ---
+    pdf.set_font("helvetica", 'B', 12)
+    pdf.cell(0, 10, "DISTRIBUCIÓN DE PAGOS", ln=True)
+    
+    pdf.set_fill_color(200, 220, 255)
+    pdf.cell(50, 10, " FAMILIA", 1, 0, 'L', fill=True)
+    pdf.cell(45, 10, " CONSUMO (m3)", 1, 0, 'C', fill=True)
+    pdf.cell(45, 10, " FACTOR", 1, 0, 'C', fill=True)
+    pdf.cell(50, 10, " SUBTOTAL (S/)", 1, 1, 'C', fill=True)
+    
+    pdf.set_font("helvetica", '', 10)
+    for nom, cons, pago in [("GABI", datos['G_Cons'], datos['G_Pago']), 
+                            ("PAPIRO", datos['P_Cons'], datos['P_Pago']), 
+                            ("ALIBI", datos['A_Cons'], datos['A_Pago'])]:
+        pdf.cell(50, 10, f" {nom}", 1)
+        pdf.cell(45, 10, f"{cons:.3f}", 1, 0, 'C')
+        pdf.cell(45, 10, f"{datos['Factor']:.4f}", 1, 0, 'C')
+        pdf.cell(50, 10, f"S/ {pago:.2f}", 1, 1, 'C')
+        
+    pdf.set_font("helvetica", 'B', 10)
+    pdf.cell(140, 10, " TOTAL A RECAUDAR:", 1, 0, 'R', fill=True)
+    pdf.cell(50, 10, f"S/ {datos['Total_Recibo']:.2f}", 1, 1, 'C', fill=True)
     
     return bytes(pdf.output())
 
