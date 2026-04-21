@@ -16,55 +16,56 @@ def crear_pdf(datos):
     pdf = FPDF()
     pdf.add_page()
     
-    # --- ENCABEZADO PRINCIPAL ---
+    # --- ENCABEZADO ---
     pdf.set_font("helvetica", 'B', 16)
     pdf.cell(0, 10, "CÁLCULO DE RECIBO DE AGUA", ln=True, align='C')
-    pdf.set_font("helvetica", '', 12)
+    pdf.set_font("helvetica", '', 11)
     pdf.cell(0, 10, "Reporte Mensual de Distribución", ln=True, align='C')
     pdf.ln(5)
     
-    # --- RESUMEN DE PAGOS Y FECHAS ---
+    # --- RESUMEN GENERAL Y FECHAS ---
     pdf.set_fill_color(240, 240, 240)
-    pdf.set_font("helvetica", 'B', 11)
-    
-    # Bloque de Total y Fechas (Simulando la estructura del PDF original)
+    pdf.set_font("helvetica", 'B', 10)
     pdf.cell(95, 10, f" TOTAL A PAGAR RECIBO: S/ {datos['Total_Recibo']:.2f}", border=1, fill=True)
     pdf.cell(95, 10, f" FECHA DE LECTURA: {datos['Fecha_Lectura']}", border=1, ln=True, fill=True)
     pdf.cell(95, 10, f" FECHA VENCIMIENTO: {datos['Fecha_Vencimiento']}", border=1)
     pdf.cell(95, 10, f" FECHA PROG. PAGO: {datos['Fecha_Pago']}", border=1, ln=True)
     pdf.ln(10)
-    
-    # --- SECCIÓN 1: DETALLE DE CONSUMOS (m3) ---
+
+    # --- SECCIÓN: DETALLE DE CONSUMOS (m3) ---
+    # Esta sección ahora incluye el Consumo Total General y las lecturas 
     pdf.set_font("helvetica", 'B', 12)
     pdf.cell(0, 10, "DETALLE DE CONSUMOS (m3)", ln=True)
     
     pdf.set_fill_color(200, 220, 255)
-    pdf.set_font("helvetica", 'B', 10)
+    pdf.set_font("helvetica", 'B', 9)
     pdf.cell(50, 10, " DESCRIPCIÓN", 1, 0, 'L', fill=True)
     pdf.cell(45, 10, " L. ACTUAL", 1, 0, 'C', fill=True)
     pdf.cell(45, 10, " L. ANTERIOR", 1, 0, 'C', fill=True)
     pdf.cell(50, 10, " CONSUMO MES", 1, 1, 'C', fill=True)
     
     pdf.set_font("helvetica", '', 10)
-    # Filas de consumos
-    familias = [
+    # Filas de familias 
+    for nom, act, ant, cons in [
         ("GABI", datos['G_Act'], datos['G_Ant'], datos['G_Cons']),
         ("PAPIRO", datos['P_Act'], datos['P_Ant'], datos['P_Cons']),
-        ("ALIBI (Diferencial)", "-", "-", datos['A_Cons']),
-    ]
-    
-    for nom, act, ant, cons in familias:
+        ("ALIBI (Diferencial)", "-", "-", datos['A_Cons'])
+    ]:
         pdf.cell(50, 10, f" {nom}", 1)
-        pdf.cell(45, 10, f"{act}" if isinstance(act, str) else f"{act:.3f}", 1, 0, 'C')
-        pdf.cell(45, 10, f"{ant}" if isinstance(ant, str) else f"{ant:.3f}", 1, 0, 'C')
+        pdf.cell(45, 10, str(act) if isinstance(act, str) else f"{act:.3f}", 1, 0, 'C')
+        pdf.cell(45, 10, str(ant) if isinstance(ant, str) else f"{ant:.3f}", 1, 0, 'C')
         pdf.cell(50, 10, f"{cons:.3f}", 1, 1, 'C')
         
+    # Fila de Consumo Total General 
     pdf.set_font("helvetica", 'B', 10)
-    pdf.cell(140, 10, " CONSUMO TOTAL GENERAL", 1, 0, 'L', fill=True)
+    pdf.set_fill_color(230, 230, 230)
+    pdf.cell(50, 10, " CONSUMO TOTAL GENERAL", 1, 0, 'L', fill=True)
+    pdf.cell(45, 10, f"{datos['T_Act']:.3f}", 1, 0, 'C', fill=True)
+    pdf.cell(45, 10, f"{datos['T_Ant']:.3f}", 1, 0, 'C', fill=True)
     pdf.cell(50, 10, f"{datos['T_Cons']:.3f}", 1, 1, 'C', fill=True)
     pdf.ln(10)
     
-    # --- SECCIÓN 2: DISTRIBUCIÓN DE PAGOS ---
+    # --- SECCIÓN: DISTRIBUCIÓN DE PAGOS ---
     pdf.set_font("helvetica", 'B', 12)
     pdf.cell(0, 10, "DISTRIBUCIÓN DE PAGOS", ln=True)
     
@@ -75,12 +76,14 @@ def crear_pdf(datos):
     pdf.cell(50, 10, " SUBTOTAL (S/)", 1, 1, 'C', fill=True)
     
     pdf.set_font("helvetica", '', 10)
-    for nom, cons, pago in [("GABI", datos['G_Cons'], datos['G_Pago']), 
-                            ("PAPIRO", datos['P_Cons'], datos['P_Pago']), 
-                            ("ALIBI", datos['A_Cons'], datos['A_Pago'])]:
+    for nom, cons, pago in [
+        ("GABI", datos['G_Cons'], datos['G_Pago']), 
+        ("PAPIRO", datos['P_Cons'], datos['P_Pago']), 
+        ("ALIBI", datos['A_Cons'], datos['A_Pago'])
+    ]:
         pdf.cell(50, 10, f" {nom}", 1)
         pdf.cell(45, 10, f"{cons:.3f}", 1, 0, 'C')
-        pdf.cell(45, 10, f"{datos['Factor']:.4f}", 1, 0, 'C')
+        pdf.cell(45, 10, f"{datos['Factor']:.6f}", 1, 0, 'C')
         pdf.cell(50, 10, f"S/ {pago:.2f}", 1, 1, 'C')
         
     pdf.set_font("helvetica", 'B', 10)
