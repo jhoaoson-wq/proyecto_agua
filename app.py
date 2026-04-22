@@ -190,20 +190,32 @@ if menu == "Ingresar Nuevo Mes":
                 st.error(f"Error al guardar en Sheets: {e}")
 
             # GENERAR PDF
+            # --- PREPARACIÓN DE DATOS COMPLETA PARA EL PDF ---
             datos_pdf = {
                 "Mes": mes_final,
                 "Total_Recibo": importe_total,
                 "Fecha_Lectura": f_lect.strftime('%d/%m/%Y'),
                 "Fecha_Vencimiento": f_venc.strftime('%d/%m/%Y'),
-                "Fecha_Pago": f_pago.strftime('%d/%m/%Y'), 
+                "Fecha_Pago": f_pago.strftime('%d/%m/%Y'),
                 "Factor": factor,
-                "Detalle": [
-                    {"nombre": "Gabi", "m3": c_gabi, "pago": c_gabi*factor},
-                    {"nombre": "Papiro", "m3": c_papiro, "pago": c_papiro*factor},
-                    {"nombre": "Alibi", "m3": c_alibi, "pago": c_alibi*factor}
-                ]
+                # Datos de Gabi
+                "G_Act": g_act, 
+                "G_Ant": g_ant, 
+                "G_Cons": c_gabi,
+                "G_Pago": c_gabi * factor,
+                # Datos de Papiro
+                "P_Act": p_act, 
+                "P_Ant": p_ant, 
+                "P_Cons": c_papiro,
+                "P_Pago": c_papiro * factor,
+                # Datos de Total y Alibi
+                "T_Act": t_act, 
+                "T_Ant": t_ant, 
+                "T_Cons": cons_total,
+                "A_Cons": c_alibi,
+                "A_Pago": c_alibi * factor
             }
-            
+
             try:
                 pdf_output = crear_pdf(datos_pdf)
                 st.download_button(
@@ -211,7 +223,7 @@ if menu == "Ingresar Nuevo Mes":
                     data=pdf_output,
                     file_name=f"Recibo_Agua_{mes_final.replace(' ', '_')}.pdf",
                     mime="application/pdf",
-                    key="download-pdf"
+                    key="download-pdf-new"
                 )
             except Exception as e:
                 st.error(f"Error al generar el PDF: {e}")
